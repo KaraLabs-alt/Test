@@ -1,0 +1,359 @@
+<title>Video Slate</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@112,600;112,800&family=Atkinson+Hyperlegible:wght@400;700&family=JetBrains+Mono:wght@400;600&display=swap">
+<style>
+/* Layout: a production slate. Insights strip on top, then the board: six stage columns that scroll sideways inside their own track; an editor panel slides over from the right. */
+:root{
+  --bg:#f2f1ee; --panel:#ffffff; --ink:#1d1c1a; --muted:#6c6862; --line:#dcd9d2;
+  --tally:#d7372b; --tally-soft:#fbe5e2; --sel:#efece6;
+  --s-idea:#7a6fb0; --s-script:#3f7cac; --s-film:#c07a1e; --s-edit:#b0518a; --s-sched:#2f8f83; --s-pub:#4b8a3a;
+  --f-display:"Archivo","Arial Black",system-ui,sans-serif;
+  --f-body:"Atkinson Hyperlegible",system-ui,-apple-system,"Segoe UI",sans-serif;
+  --f-mono:"JetBrains Mono",ui-monospace,Menlo,Consolas,monospace;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+  --bg:#141312; --panel:#1d1c1a; --ink:#ecebe7; --muted:#a19c94; --line:#33312d;
+  --tally:#ff6a5c; --tally-soft:#3a1d1a; --sel:#26241f;
+  --s-idea:#aaa0e0; --s-script:#7fb6e0; --s-film:#e8a95a; --s-edit:#e08cbf; --s-sched:#6cc8bb; --s-pub:#8cc777;
+  color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#141312; --panel:#1d1c1a; --ink:#ecebe7; --muted:#a19c94; --line:#33312d;
+  --tally:#ff6a5c; --tally-soft:#3a1d1a; --sel:#26241f;
+  --s-idea:#aaa0e0; --s-script:#7fb6e0; --s-film:#e8a95a; --s-edit:#e08cbf; --s-sched:#6cc8bb; --s-pub:#8cc777;
+  color-scheme:dark}
+*{box-sizing:border-box}
+body{background:var(--bg);color:var(--ink);font-family:var(--f-body);font-size:15px;line-height:1.45;
+  padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));padding-block:22px 40px}
+.wrap{max-width:1400px;margin:0 auto;display:flex;flex-direction:column;gap:22px}
+header{display:flex;flex-wrap:wrap;gap:14px 24px;align-items:flex-end;justify-content:space-between}
+.brand{display:flex;flex-direction:column;gap:4px}
+.rec{font-family:var(--f-mono);font-size:12px;letter-spacing:.06em;color:var(--tally);display:flex;align-items:center;gap:8px}
+.rec::before{content:"";width:9px;height:9px;border-radius:50%;background:var(--tally)}
+h1{font-family:var(--f-display);font-weight:800;font-stretch:112%;font-size:clamp(30px,4.4vw,46px);line-height:1;margin:0;letter-spacing:-.01em}
+.hbtns{display:flex;gap:8px;flex-wrap:wrap}
+.btn{font:700 14px/1 var(--f-body);padding:11px 15px;border-radius:6px;border:1px solid var(--ink);background:var(--ink);color:var(--panel);cursor:pointer}
+.btn.ghost{background:transparent;color:var(--ink);border-color:var(--line)}
+.btn.danger{background:transparent;color:var(--tally);border-color:var(--tally)}
+.btn:hover{filter:brightness(1.08)}
+button:focus-visible,input:focus-visible,select:focus-visible,textarea:focus-visible,.card:focus-visible{outline:2px solid var(--tally);outline-offset:2px}
+.status{font-family:var(--f-mono);font-size:12px;color:var(--muted)}
+
+/* insights */
+.insights{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:1px;background:var(--line);border:1px solid var(--line);border-radius:8px;overflow:hidden}
+@media (max-width:960px){.insights{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media (max-width:520px){.insights{grid-template-columns:minmax(0,1fr)}}
+.ins{background:var(--panel);padding:14px 16px;display:flex;flex-direction:column;gap:8px;min-width:0}
+.ins h3{margin:0;font:600 11.5px/1 var(--f-mono);letter-spacing:.08em;text-transform:uppercase;color:var(--muted)}
+.big{font-family:var(--f-display);font-weight:800;font-stretch:112%;font-size:30px;line-height:1;font-variant-numeric:tabular-nums}
+.sub{font-size:13px;color:var(--muted)}
+.bars{display:flex;flex-direction:column;gap:6px}
+.bar{display:grid;grid-template-columns:minmax(0,1fr) 64px;gap:8px;align-items:center;font-size:13px}
+.bar .lab{display:flex;flex-direction:column;gap:3px;min-width:0}
+.bar .lab span{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.bar i{display:block;height:6px;border-radius:3px;background:var(--tally)}
+.bar b{font:600 12.5px var(--f-mono);text-align:right;font-variant-numeric:tabular-nums}
+.empty-ins{font-size:13px;color:var(--muted)}
+
+/* board */
+.board-wrap{overflow-x:auto;margin-inline:-4px;padding:4px 4px 10px}
+.board{display:grid;grid-template-columns:repeat(6,minmax(240px,1fr));gap:12px;min-width:1500px}
+@media (max-width:700px){.board{grid-template-columns:repeat(6,82vw);min-width:0}}
+.col{background:var(--sel);border-radius:8px;display:flex;flex-direction:column;gap:8px;padding:10px;min-height:260px}
+.col.over{outline:2px dashed var(--c)}
+.colh{display:flex;align-items:center;justify-content:space-between;gap:8px;padding:2px 4px 6px;border-bottom:3px solid var(--c)}
+.colh h2{margin:0;font-family:var(--f-display);font-weight:600;font-stretch:112%;font-size:15px;letter-spacing:.01em}
+.colh .n{font:600 12px var(--f-mono);color:var(--muted);font-variant-numeric:tabular-nums}
+.add{font:700 13px var(--f-body);color:var(--muted);background:none;border:1px dashed var(--line);border-radius:6px;padding:9px;cursor:pointer;text-align:left}
+.add:hover{color:var(--ink);border-color:var(--muted)}
+.card{background:var(--panel);border:1px solid var(--line);border-radius:6px;padding:10px 11px;display:flex;flex-direction:column;gap:7px;cursor:pointer}
+.card:hover{border-color:var(--muted)}
+.card[draggable="true"]{cursor:grab}
+.card .t{font-weight:700;font-size:14.5px;line-height:1.3}
+.meta{display:flex;flex-wrap:wrap;gap:5px;align-items:center}
+.tag{font:600 11px/1 var(--f-mono);padding:4px 6px;border-radius:4px;background:var(--sel);color:var(--muted);letter-spacing:.02em}
+.tag.ex{background:var(--tally-soft);color:var(--tally)}
+.tag.short{color:var(--ink)}
+.due{font:600 11.5px var(--f-mono);color:var(--muted);font-variant-numeric:tabular-nums}
+.due.late{color:var(--tally)}
+.stats{display:flex;gap:10px;font:600 12px var(--f-mono);font-variant-numeric:tabular-nums}
+.stats span{color:var(--muted);font-weight:400}
+.mv{display:flex;justify-content:space-between}
+.mv button{font:600 12px var(--f-mono);background:none;border:0;color:var(--muted);cursor:pointer;padding:4px 2px}
+.mv button:hover{color:var(--ink)}
+.mv button[disabled]{visibility:hidden}
+
+.notice{background:var(--tally-soft);color:var(--ink);border-radius:8px;padding:12px 14px;display:flex;flex-wrap:wrap;gap:10px 16px;align-items:center;justify-content:space-between;font-size:14px}
+
+/* editor */
+.scrim{position:fixed;inset:0;background:rgba(0,0,0,.35);z-index:20}
+.editor{position:fixed;top:0;right:0;bottom:0;width:min(460px,100%);background:var(--panel);z-index:21;border-left:1px solid var(--line);
+  display:flex;flex-direction:column;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px);padding-right:env(safe-area-inset-right,0px)}
+.ed-h{display:flex;justify-content:space-between;align-items:center;padding:16px 18px;border-bottom:1px solid var(--line)}
+.ed-h h2{margin:0;font-family:var(--f-display);font-weight:800;font-stretch:112%;font-size:20px}
+.x{background:none;border:0;font-size:22px;color:var(--muted);cursor:pointer;line-height:1;padding:4px 8px}
+.ed-b{overflow-y:auto;padding:16px 18px;display:flex;flex-direction:column;gap:14px}
+.f{display:flex;flex-direction:column;gap:5px}
+.f label{font:600 11.5px var(--f-mono);letter-spacing:.06em;text-transform:uppercase;color:var(--muted)}
+.f small{color:var(--muted);font-size:12.5px}
+input,select,textarea{font:15px var(--f-body);color:var(--ink);background:var(--bg);border:1px solid var(--line);border-radius:6px;padding:9px 10px;width:100%}
+textarea{min-height:84px;resize:vertical}
+.row{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+fieldset{border:1px solid var(--line);border-radius:8px;padding:12px;display:flex;flex-direction:column;gap:12px;margin:0}
+legend{font:600 11.5px var(--f-mono);letter-spacing:.06em;text-transform:uppercase;color:var(--s-pub);padding:0 6px}
+.ed-f{display:flex;gap:8px;justify-content:space-between;padding:14px 18px;border-top:1px solid var(--line);flex-wrap:wrap}
+.confirm{display:flex;gap:8px;align-items:center;font-size:13px}
+@media (prefers-reduced-motion:no-preference){.editor{animation:slide .18s ease-out}@keyframes slide{from{transform:translateX(24px);opacity:.6}}}
+</style>
+
+<div class="wrap">
+  <header>
+    <div class="brand">
+      <div class="rec">CHANNEL PIPELINE</div>
+      <h1>Video Slate</h1>
+    </div>
+    <div class="hbtns">
+      <span class="status" id="status" aria-live="polite"></span>
+      <button class="btn" id="newBtn" type="button">New video idea</button>
+    </div>
+  </header>
+
+  <div id="exNotice" class="notice" hidden>
+    <span>The cards marked <b>Example</b> show how the board works. Clear them when you're ready to start with your own ideas.</span>
+    <span class="confirm" id="exConfirm"><button class="btn ghost" id="clearEx" type="button">Clear examples</button></span>
+  </div>
+
+  <section class="insights" id="insights" aria-label="Performance"></section>
+
+  <div class="board-wrap"><div class="board" id="board"></div></div>
+</div>
+
+<div id="scrim" class="scrim" hidden></div>
+<aside id="editor" class="editor" hidden aria-labelledby="edTitle">
+  <div class="ed-h"><h2 id="edTitle">Video</h2><button class="x" id="closeEd" type="button" aria-label="Close">×</button></div>
+  <form class="ed-b" id="edForm">
+    <div class="f"><label for="e-title">Working title</label><input id="e-title" required maxlength="140"></div>
+    <div class="f"><label for="e-alts">Other title options</label><textarea id="e-alts" rows="3" placeholder="One per line"></textarea><small>Test a few framings before you commit.</small></div>
+    <div class="row">
+      <div class="f"><label for="e-topic">Topic</label><input id="e-topic" list="topics" maxlength="40" placeholder="e.g. Law explained"><datalist id="topics"></datalist></div>
+      <div class="f"><label for="e-format">Format</label><select id="e-format"><option value="long">Long-form</option><option value="short">Short</option></select></div>
+    </div>
+    <div class="row">
+      <div class="f"><label for="e-stage">Stage</label><select id="e-stage"></select></div>
+      <div class="f"><label for="e-due">Publish date</label><input id="e-due" type="date"></div>
+    </div>
+    <div class="f"><label for="e-hook">Hook</label><textarea id="e-hook" rows="2" placeholder="The first 15 seconds"></textarea></div>
+    <div class="f"><label for="e-thumb">Thumbnail idea</label><input id="e-thumb" maxlength="200"></div>
+    <div class="f"><label for="e-notes">Notes</label><textarea id="e-notes" rows="4"></textarea></div>
+    <fieldset id="perf">
+      <legend>Performance</legend>
+      <div class="row">
+        <div class="f"><label for="e-views">Views</label><input id="e-views" type="number" min="0" step="1" inputmode="numeric"></div>
+        <div class="f"><label for="e-hours">Watch time (hours)</label><input id="e-hours" type="number" min="0" step="0.1" inputmode="decimal"></div>
+      </div>
+      <div class="row">
+        <div class="f"><label for="e-ctr">Click-through rate (%)</label><input id="e-ctr" type="number" min="0" max="100" step="0.1" inputmode="decimal"></div>
+        <div class="f"><label for="e-avd">Avg view duration (min)</label><input id="e-avd" type="number" min="0" step="0.1" inputmode="decimal"></div>
+      </div>
+      <small class="sub">Copy these from YouTube Studio once the video has been live for a week or so.</small>
+    </fieldset>
+  </form>
+  <div class="ed-f">
+    <span class="confirm" id="delWrap"><button class="btn danger" id="delBtn" type="button">Delete</button></span>
+    <span class="confirm"><button class="btn ghost" id="cancelEd" type="button">Cancel</button><button class="btn" id="saveEd" type="button">Save</button></span>
+  </div>
+</aside>
+
+<script>
+const STAGES=[
+  {id:"idea",name:"Ideas",c:"--s-idea"},
+  {id:"script",name:"Scripting",c:"--s-script"},
+  {id:"film",name:"Filming",c:"--s-film"},
+  {id:"edit",name:"Editing",c:"--s-edit"},
+  {id:"sched",name:"Scheduled",c:"--s-sched"},
+  {id:"pub",name:"Published",c:"--s-pub"}
+];
+const SIDX=Object.fromEntries(STAGES.map((s,i)=>[s.id,i]));
+let videos=[]; let store=null; let editing=null;
+const $=id=>document.getElementById(id);
+const esc=s=>String(s??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+const num=v=>(v===""||v==null||isNaN(+v))?null:+v;
+const fmtN=n=>n==null?"–":n>=1e6?(n/1e6).toFixed(1)+"M":n>=1e4?Math.round(n/1e3)+"k":n>=1e3?(n/1e3).toFixed(1)+"k":String(Math.round(n));
+const today=()=>new Date().toISOString().slice(0,10);
+const fmtD=iso=>iso?new Date(iso+"T12:00:00").toLocaleDateString("en-GB",{day:"numeric",month:"short"}):"";
+
+/* ---------- storage: shared db when available, this browser otherwise ---------- */
+const LS="video-slate-v1";
+function localStore(){
+  let subs=[];
+  const read=()=>{try{return JSON.parse(localStorage.getItem(LS)||"[]")}catch{return[]}};
+  const write=a=>{try{localStorage.setItem(LS,JSON.stringify(a))}catch{} subs.forEach(f=>f(a));};
+  return{kind:"local",
+    subscribe(f){subs.push(f);f(read());},
+    async save(id,data){const a=read().filter(v=>v.id!==id);a.push({...data,id});write(a);},
+    async remove(id){write(read().filter(v=>v.id!==id));},
+    newId(){return "v"+Date.now().toString(36)+Math.random().toString(36).slice(2,6)}};
+}
+function dbStore(db){
+  const col=db.collection("videos");
+  return{kind:"db",
+    subscribe(f,err){col.onSnapshot(s=>f(s.docs.map(d=>({...d.data(),id:d.id})),s.metadata),err);},
+    save(id,data){const b={...data};delete b.id;return col.doc(id).set(b);},
+    remove(id){return col.doc(id).delete();},
+    newId(){return col.doc().id}};
+}
+function setStatus(t){$("status").textContent=t;}
+
+async function boot(){
+  render();
+  let db=null;
+  if(window.claude&&typeof window.claude.use==="function"){ try{db=await window.claude.use("db");}catch{db=null;} }
+  if(db){
+    store=dbStore(db);
+    setStatus("Loading your board…");
+    const timer=setTimeout(()=>setStatus("Can't reach your saved board yet. Changes will sync when it connects."),10000);
+    store.subscribe((list,meta)=>{
+      if(meta&&!meta.fromCache){clearTimeout(timer);setStatus("Saved to your account");}
+      videos=list;render();
+    },e=>{clearTimeout(timer);setStatus(e.code==="revoked"?"Read-only":"Saving is unavailable right now");});
+  }else{
+    store=localStore();
+    setStatus("Saved in this browser");
+    store.subscribe(list=>{videos=list;render();});
+  }
+}
+
+/* ---------- rendering ---------- */
+function render(){
+  renderBoard();renderInsights();
+  const hasEx=videos.some(v=>v.example);
+  $("exNotice").hidden=!hasEx;
+  $("topics").innerHTML=[...new Set(videos.map(v=>v.topic).filter(Boolean))].map(t=>`<option value="${esc(t)}">`).join("");
+}
+function sortCards(a,b){
+  if(a.stage==="pub") return (b.due||"").localeCompare(a.due||"");
+  if(a.due&&b.due) return a.due.localeCompare(b.due);
+  if(a.due) return -1; if(b.due) return 1;
+  return (a.created||0)-(b.created||0);
+}
+function renderBoard(){
+  const t=today();
+  $("board").innerHTML=STAGES.map((s,i)=>{
+    const cards=videos.filter(v=>(v.stage||"idea")===s.id).sort(sortCards);
+    return `<section class="col" data-stage="${s.id}" style="--c:var(${s.c})" aria-label="${s.name}">
+      <div class="colh"><h2>${s.name}</h2><span class="n">${String(cards.length).padStart(2,"0")}</span></div>
+      ${cards.map(v=>{
+        const late=v.due&&v.due<t&&s.id!=="pub";
+        const stats=s.id==="pub"&&(v.views!=null||v.ctr!=null)?`<div class="stats">${fmtN(v.views)}<span>views</span>${v.ctr!=null?`${v.ctr}%<span>CTR</span>`:""}</div>`:"";
+        return `<article class="card" tabindex="0" draggable="true" data-id="${esc(v.id)}">
+          <div class="t">${esc(v.title||"Untitled")}</div>
+          <div class="meta">
+            ${v.example?`<span class="tag ex">Example</span>`:""}
+            ${v.topic?`<span class="tag">${esc(v.topic)}</span>`:""}
+            ${v.format==="short"?`<span class="tag short">Short</span>`:""}
+            ${v.due?`<span class="due ${late?"late":""}">${late?"Overdue · ":""}${fmtD(v.due)}</span>`:""}
+          </div>${stats}
+          <div class="mv"><button type="button" data-move="-1" ${i===0?"disabled":""} aria-label="Move back to ${i>0?STAGES[i-1].name:""}">← ${i>0?STAGES[i-1].name:""}</button>
+          <button type="button" data-move="1" ${i===STAGES.length-1?"disabled":""} aria-label="Move on to ${i<5?STAGES[i+1].name:""}">${i<5?STAGES[i+1].name:""} →</button></div>
+        </article>`;}).join("")}
+      ${s.id==="idea"?`<button class="add" type="button" data-add="idea">+ Add an idea</button>`:""}
+    </section>`;
+  }).join("");
+}
+function avg(a){return a.length?a.reduce((x,y)=>x+y,0)/a.length:null;}
+function groupBars(pub,key,label,metric,fmt){
+  const g={};pub.forEach(v=>{const k=key(v);if(!k)return;(g[k]=g[k]||[]).push(v);});
+  const rows=Object.entries(g).map(([k,vs])=>({k,n:vs.length,val:avg(vs.map(metric).filter(x=>x!=null))})).filter(r=>r.val!=null).sort((a,b)=>b.val-a.val).slice(0,4);
+  if(!rows.length) return `<p class="empty-ins">Add performance numbers to published videos to compare ${label}.</p>`;
+  const max=rows[0].val||1;
+  return `<div class="bars">${rows.map(r=>`<div class="bar"><div class="lab"><span>${esc(r.k)} <span class="sub">· ${r.n}</span></span><i style="width:${Math.max(4,r.val/max*100)}%"></i></div><b>${fmt(r.val)}</b></div>`).join("")}</div>`;
+}
+function renderInsights(){
+  const pub=videos.filter(v=>v.stage==="pub");
+  const inProg=videos.filter(v=>["script","film","edit","sched"].includes(v.stage)).length;
+  const next=videos.filter(v=>v.stage!=="pub"&&v.due&&v.due>=today()).sort((a,b)=>a.due.localeCompare(b.due))[0];
+  const totalViews=pub.reduce((s,v)=>s+(num(v.views)||0),0);
+  const best=[...pub].filter(v=>v.views!=null).sort((a,b)=>b.views-a.views)[0];
+  $("insights").innerHTML=`
+    <div class="ins"><h3>Pipeline</h3><div class="big">${inProg}</div>
+      <div class="sub">in production · ${videos.filter(v=>v.stage==="idea").length} ideas waiting</div>
+      <div class="sub">${next?`Next up: <b>${esc(next.title)}</b>, ${fmtD(next.due)}`:"No publish date set yet"}</div></div>
+    <div class="ins"><h3>Published</h3><div class="big">${fmtN(totalViews)}</div>
+      <div class="sub">views across ${pub.length} video${pub.length===1?"":"s"}</div>
+      <div class="sub">${best?`Best: <b>${esc(best.title)}</b> (${fmtN(best.views)})`:"Your top video will show here"}</div></div>
+    <div class="ins"><h3>Avg views by topic</h3>${groupBars(pub,v=>v.topic,"topics",v=>num(v.views),fmtN)}</div>
+    <div class="ins"><h3>Click-through by format</h3>${groupBars(pub,v=>v.format==="short"?"Shorts":"Long-form","formats",v=>num(v.ctr),x=>x.toFixed(1)+"%")}</div>`;
+}
+
+/* ---------- interactions ---------- */
+const board=$("board");
+board.addEventListener("click",e=>{
+  const add=e.target.closest("[data-add]"); if(add){openEditor(null,add.dataset.add);return;}
+  const mv=e.target.closest("[data-move]");
+  const card=e.target.closest(".card"); if(!card) return;
+  if(mv){e.stopPropagation();move(card.dataset.id,+mv.dataset.move);return;}
+  openEditor(card.dataset.id);
+});
+board.addEventListener("keydown",e=>{const c=e.target.closest(".card");if(c&&e.target===c&&(e.key==="Enter"||e.key===" ")){e.preventDefault();openEditor(c.dataset.id);}});
+board.addEventListener("dragstart",e=>{const c=e.target.closest(".card");if(c){e.dataTransfer.setData("text/plain",c.dataset.id);e.dataTransfer.effectAllowed="move";}});
+board.addEventListener("dragover",e=>{const col=e.target.closest(".col");if(col){e.preventDefault();document.querySelectorAll(".col.over").forEach(x=>x!==col&&x.classList.remove("over"));col.classList.add("over");}});
+board.addEventListener("dragleave",e=>{const col=e.target.closest(".col");if(col&&!col.contains(e.relatedTarget))col.classList.remove("over");});
+board.addEventListener("drop",e=>{const col=e.target.closest(".col");if(!col)return;e.preventDefault();col.classList.remove("over");
+  const id=e.dataTransfer.getData("text/plain");const v=videos.find(x=>x.id===id);if(v&&v.stage!==col.dataset.stage)saveVideo({...v,stage:col.dataset.stage});});
+
+function move(id,dir){const v=videos.find(x=>x.id===id);if(!v)return;const i=SIDX[v.stage||"idea"]+dir;if(i<0||i>=STAGES.length)return;
+  const nv={...v,stage:STAGES[i].id};if(nv.stage==="pub"&&!nv.due)nv.due=today();saveVideo(nv);}
+async function saveVideo(v){
+  const prev=videos; videos=videos.some(x=>x.id===v.id)?videos.map(x=>x.id===v.id?v:x):[...videos,v]; render();
+  try{await store.save(v.id,v);}catch(e){videos=prev;render();setStatus(e&&e.code==="quota_exceeded"?"Board is full. Delete some videos to add more.":"That change didn't save. Try again.");}
+}
+
+$("e-stage").innerHTML=STAGES.map(s=>`<option value="${s.id}">${s.name}</option>`).join("");
+const F=["title","alts","topic","format","stage","due","hook","thumb","notes","views","hours","ctr","avd"];
+const MAP={hours:"watchHours"};
+function openEditor(id,stage){
+  const v=id?videos.find(x=>x.id===id):{stage:stage||"idea",format:"long"};
+  if(!v||!store)return; editing=id||null;
+  F.forEach(k=>{$("e-"+k).value=v[MAP[k]||k]??"";});
+  $("edTitle").textContent=id?"Edit video":"New video idea";
+  $("delWrap").hidden=!id; resetDel();
+  togglePerf(); $("scrim").hidden=false; $("editor").hidden=false; $("e-title").focus();
+}
+function togglePerf(){$("perf").hidden=!["sched","pub"].includes($("e-stage").value);}
+$("e-stage").addEventListener("change",togglePerf);
+function closeEditor(){$("scrim").hidden=true;$("editor").hidden=true;editing=null;}
+$("closeEd").onclick=closeEditor;$("cancelEd").onclick=closeEditor;$("scrim").onclick=closeEditor;
+document.addEventListener("keydown",e=>{if(e.key==="Escape"&&!$("editor").hidden)closeEditor();});
+$("newBtn").onclick=()=>openEditor(null,"idea");
+$("edForm").addEventListener("submit",e=>{e.preventDefault();$("saveEd").click();});
+$("saveEd").onclick=()=>{
+  const title=$("e-title").value.trim(); if(!title){$("e-title").focus();$("e-title").reportValidity();return;}
+  const base=editing?videos.find(x=>x.id===editing):{created:Date.now()};
+  const v={...base,id:editing||store.newId()};
+  F.forEach(k=>{const val=$("e-"+k).value;const key=MAP[k]||k;v[key]=["views","hours","ctr","avd"].includes(k)?num(val):val.trim();});
+  v.title=title; if(v.stage==="pub"&&!v.due)v.due=today();
+  delete v.example; saveVideo(v); closeEditor();
+};
+function resetDel(){$("delWrap").innerHTML=`<button class="btn danger" id="delBtn" type="button">Delete</button>`;
+  $("delBtn").onclick=()=>{$("delWrap").innerHTML=`Delete this video? <button class="btn danger" id="delYes" type="button">Delete</button><button class="btn ghost" id="delNo" type="button">Keep</button>`;
+    $("delNo").onclick=resetDel;
+    $("delYes").onclick=async()=>{const id=editing;closeEditor();const prev=videos;videos=videos.filter(x=>x.id!==id);render();try{await store.remove(id);}catch{videos=prev;render();setStatus("Couldn't delete that video. Try again.");}};};}
+function resetEx(){$("exConfirm").innerHTML=`<button class="btn ghost" id="clearEx" type="button">Clear examples</button>`;bindClearEx();}
+function bindClearEx(){const b=$("clearEx");if(b)b.onclick=()=>{$("exConfirm").innerHTML=`Remove all example cards? <button class="btn danger" id="exYes" type="button">Clear</button><button class="btn ghost" id="exNo" type="button">Keep</button>`;$("exNo").onclick=resetEx;$("exYes").onclick=async()=>{const ex=videos.filter(v=>v.example);videos=videos.filter(v=>!v.example);render();for(const v of ex){try{await store.remove(v.id);}catch{}}resetEx();};};}
+bindClearEx();
+
+/* Standalone copy (GitHub Pages): seed examples once so the board isn't empty. */
+const EXAMPLES=[
+ {id:"ex1",title:"The EU AI Act explained in 10 minutes",topic:"Law explained",format:"long",stage:"pub",due:"2026-10-06",views:4820,watchHours:310,ctr:6.2,avd:4.1},
+ {id:"ex2",title:"5 GDPR myths your company still believes",topic:"Law explained",format:"long",stage:"pub",due:"2026-10-20",views:2950,watchHours:170,ctr:5.1,avd:3.6},
+ {id:"ex3",title:"Is your smart doorbell legal?",topic:"Everyday law",format:"short",stage:"pub",due:"2026-10-27",views:11400,watchHours:41,ctr:8.4,avd:0.4},
+ {id:"ex4",title:"I let AI draft my contracts for a week",topic:"Experiments",format:"long",stage:"edit",due:"2026-11-10"},
+ {id:"ex5",title:"How Belgian courts actually work",topic:"Law explained",format:"long",stage:"script",due:"2026-11-24",alts:"Inside a Belgian courtroom\nWhat really happens when you go to court in Belgium"},
+ {id:"ex6",title:"Day in the life: starting a law firm",topic:"Behind the scenes",format:"long",stage:"idea"},
+ {id:"ex7",title:"Can your boss read your WhatsApp?",topic:"Everyday law",format:"short",stage:"idea"}
+].map((v,i)=>({...v,example:true,created:i}));
+function seedLocalOnce(){try{if(localStorage.getItem(LS)===null)localStorage.setItem(LS,JSON.stringify(EXAMPLES));}catch{}}
+if(!(window.claude&&typeof window.claude.use==="function")) seedLocalOnce();
+boot();
+</script>

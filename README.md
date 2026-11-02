@@ -37,3 +37,15 @@ It is a single HTML file with no build step. Open `index.html` in a browser, or 
 ## Disclaimer
 
 This is a first-pass triage aid, not legal advice. It simplifies the Regulation's tests and exceptions. Verify any result against the consolidated text in the Official Journal.
+
+---
+
+# Video Slate
+
+A YouTube production board in `planner/`. Each video moves through six stages: Ideas, Scripting, Filming, Editing, Scheduled and Published. Once a video is live, you add its views, watch time, click-through rate and average view duration from YouTube Studio. The top strip then compares topics and formats, so you can see what your audience responds to.
+
+- Drag cards between columns, or use the arrows on each card
+- Keep several title options per video, plus the hook and thumbnail idea
+- Overdue publish dates show in red
+
+Open `planner/index.html` in a browser, or visit `/planner/` on your GitHub Pages site. The standalone copy saves to the browser you open it in; the hosted version on Claude saves to your account.
