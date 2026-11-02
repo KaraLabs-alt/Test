@@ -1,0 +1,385 @@
+<title>AI Act Triage</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<meta name="description" content="Classify an AI system under the EU AI Act: prohibited, high-risk, transparency or minimal risk, with the articles and deadlines that apply.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans+Condensed:wght@500;600;700&family=Source+Serif+4:opsz,wght@8..60,400;8..60,600&display=swap">
+<style>
+/* Layout: two columns on desktop — the questionnaire on the left reads like an annotated statute, the verdict on the right stays pinned like a case file. One column on phones, verdict first. */
+:root{
+  --paper:#eef1f6; --sheet:#ffffff; --ink:#18202e; --muted:#5b6578; --rule:#d3d9e4;
+  --accent:#1f3fbf; --accent-soft:#e3e8fb;
+  --t-prohibited:#b42318; --t-high:#b54708; --t-limited:#1f6fb2; --t-minimal:#2e7d4f; --t-out:#5b6578;
+  --t-bg-prohibited:#fdecea; --t-bg-high:#fdf1e3; --t-bg-limited:#e6f1fb; --t-bg-minimal:#e5f4eb; --t-bg-out:#eceff4;
+  --f-display:"IBM Plex Sans Condensed","Arial Narrow",system-ui,sans-serif;
+  --f-body:"Source Serif 4",Georgia,"Times New Roman",serif;
+  --f-mono:"IBM Plex Mono",ui-monospace,Menlo,Consolas,monospace;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+  --paper:#10141c; --sheet:#171d28; --ink:#e4e8f0; --muted:#98a2b6; --rule:#2a3242;
+  --accent:#8ea2ff; --accent-soft:#222b4a;
+  --t-prohibited:#ff8a80; --t-high:#f5b067; --t-limited:#7fbaf0; --t-minimal:#7fd3a0; --t-out:#98a2b6;
+  --t-bg-prohibited:#3a1d1b; --t-bg-high:#3a2a18; --t-bg-limited:#18293d; --t-bg-minimal:#17311f; --t-bg-out:#222936;
+  color-scheme:dark}}
+:root[data-theme="dark"]{
+  --paper:#10141c; --sheet:#171d28; --ink:#e4e8f0; --muted:#98a2b6; --rule:#2a3242;
+  --accent:#8ea2ff; --accent-soft:#222b4a;
+  --t-prohibited:#ff8a80; --t-high:#f5b067; --t-limited:#7fbaf0; --t-minimal:#7fd3a0; --t-out:#98a2b6;
+  --t-bg-prohibited:#3a1d1b; --t-bg-high:#3a2a18; --t-bg-limited:#18293d; --t-bg-minimal:#17311f; --t-bg-out:#222936;
+  color-scheme:dark}
+
+*{box-sizing:border-box}
+body{background:var(--paper);color:var(--ink);font-family:var(--f-body);font-size:16px;line-height:1.55;
+  padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));padding-block:28px 48px}
+.wrap{max-width:1180px;margin:0 auto;display:flex;flex-direction:column;gap:28px}
+header{display:flex;flex-direction:column;gap:10px;max-width:70ch}
+.eyebrow{font-family:var(--f-mono);font-size:12px;letter-spacing:.08em;text-transform:uppercase;color:var(--accent)}
+h1{font-family:var(--f-display);font-weight:700;font-size:clamp(34px,5vw,54px);line-height:1.02;margin:0;text-wrap:balance;letter-spacing:-.01em}
+.lede{color:var(--muted);margin:0;font-size:17px}
+.presets{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
+.presets span{font-family:var(--f-mono);font-size:12px;color:var(--muted);margin-right:4px}
+.chip{font:500 14px/1 var(--f-display);border:1px solid var(--rule);background:var(--sheet);color:var(--ink);padding:9px 12px;border-radius:999px;cursor:pointer}
+.chip:hover{border-color:var(--accent)}
+.chip[aria-pressed="true"]{background:var(--accent);border-color:var(--accent);color:var(--sheet)}
+button:focus-visible,input:focus-visible,label:focus-within{outline:2px solid var(--accent);outline-offset:2px}
+
+.grid{display:grid;grid-template-columns:minmax(0,1fr) 400px;gap:28px;align-items:start}
+@media (max-width:900px){.grid{grid-template-columns:minmax(0,1fr)}.verdict{order:-1;position:static!important}}
+
+.steps{display:flex;flex-direction:column;gap:0;background:var(--sheet);border:1px solid var(--rule);border-radius:6px}
+.step{display:grid;grid-template-columns:64px minmax(0,1fr);border-top:1px solid var(--rule)}
+.step:first-child{border-top:0}
+.step[data-skip="true"] .body{opacity:.45}
+.ref{font-family:var(--f-mono);font-size:12px;color:var(--accent);padding:22px 0 0 18px;line-height:1.3}
+.body{padding:20px 22px 22px 6px;display:flex;flex-direction:column;gap:12px;min-width:0}
+.body h2{font-family:var(--f-display);font-weight:600;font-size:21px;line-height:1.2;margin:0;text-wrap:balance}
+.body p.hint{margin:0;color:var(--muted);font-size:15px}
+.opts{display:flex;flex-direction:column;gap:6px}
+.opt{display:flex;gap:12px;align-items:flex-start;padding:9px 10px;border-radius:4px;cursor:pointer;border:1px solid transparent}
+.opt:hover{background:var(--accent-soft)}
+.opt input{margin:4px 0 0;accent-color:var(--accent);flex:none;width:16px;height:16px}
+.opt .t{font-size:15.5px;line-height:1.45}
+.opt .t small{display:block;color:var(--muted);font-size:13.5px}
+.opt:has(input:checked){background:var(--accent-soft);border-color:var(--rule)}
+.seg{display:flex;flex-wrap:wrap;gap:8px}
+.seg label{font:500 15px/1 var(--f-display);padding:10px 14px;border:1px solid var(--rule);border-radius:4px;cursor:pointer;background:var(--sheet)}
+.seg input{position:absolute;opacity:0;pointer-events:none}
+.seg label:has(input:checked){background:var(--ink);color:var(--sheet);border-color:var(--ink)}
+.skipnote{font-family:var(--f-mono);font-size:12px;color:var(--muted)}
+
+.verdict{position:sticky;top:calc(env(safe-area-inset-top,0px) + 16px);display:flex;flex-direction:column;gap:14px}
+.card{background:var(--sheet);border:1px solid var(--rule);border-radius:6px;overflow:hidden}
+.tier{padding:18px 20px;background:var(--tbg);border-bottom:1px solid var(--rule);display:flex;flex-direction:column;gap:6px}
+.tier .k{font-family:var(--f-mono);font-size:12px;letter-spacing:.08em;text-transform:uppercase;color:var(--tc)}
+.tier .name{font-family:var(--f-display);font-weight:700;font-size:30px;line-height:1.05;color:var(--tc)}
+.tier .why{font-size:15px;margin:0}
+.scale{display:grid;grid-template-columns:repeat(4,1fr);gap:3px;margin-top:6px}
+.scale i{height:6px;border-radius:2px;background:var(--rule)}
+.scale i.on{background:var(--tc)}
+.sec{padding:16px 20px;border-top:1px solid var(--rule);display:flex;flex-direction:column;gap:8px}
+.sec:first-of-type{border-top:0}
+.sec h3{font-family:var(--f-mono);font-weight:500;font-size:12px;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);margin:0}
+.sec ul{margin:0;padding-left:18px;display:flex;flex-direction:column;gap:5px;font-size:14.5px}
+.sec li b{font-family:var(--f-mono);font-weight:500;font-size:12.5px;color:var(--accent)}
+.dates{display:flex;flex-direction:column;gap:6px;font-size:14px}
+.dates div{display:grid;grid-template-columns:98px minmax(0,1fr);gap:10px;align-items:baseline}
+.dates time{font-family:var(--f-mono);font-size:12.5px;font-variant-numeric:tabular-nums;color:var(--ink)}
+.dates .past time{color:var(--muted)}
+.dates .past span::after{content:" · in force";font-family:var(--f-mono);font-size:11px;color:var(--t-minimal)}
+.actions{display:flex;gap:8px;flex-wrap:wrap}
+.btn{font:600 14px/1 var(--f-display);padding:11px 14px;border-radius:4px;border:1px solid var(--accent);background:var(--accent);color:var(--sheet);cursor:pointer}
+.btn.ghost{background:transparent;color:var(--accent)}
+.toast{font-family:var(--f-mono);font-size:12px;color:var(--t-minimal);align-self:center}
+textarea#memo{width:100%;min-height:160px;font:12.5px/1.5 var(--f-mono);background:var(--paper);color:var(--ink);border:1px solid var(--rule);border-radius:4px;padding:10px}
+.fine{font-size:13px;color:var(--muted);max-width:75ch}
+.fine a{color:var(--accent)}
+@media (prefers-reduced-motion:no-preference){.tier{transition:background .25s}}
+</style>
+
+<div class="wrap">
+  <header>
+    <div class="eyebrow">Regulation (EU) 2024/1689 · as amended by the AI Omnibus</div>
+    <h1>AI Act Triage</h1>
+    <p class="lede">Answer six questions about an AI system. The verdict on the right updates as you go: its risk tier, the articles behind it, and the deadlines that apply to your role.</p>
+    <div class="presets" role="group" aria-label="Example systems">
+      <span>Try an example:</span>
+      <button class="chip" data-preset="cv">CV screening tool</button>
+      <button class="chip" data-preset="chat">Customer service chatbot</button>
+      <button class="chip" data-preset="credit">Credit scoring model</button>
+      <button class="chip" data-preset="spam">Spam filter</button>
+      <button class="chip" data-preset="emotion">Staff emotion monitor</button>
+      <button class="chip" data-preset="clear">Start blank</button>
+    </div>
+  </header>
+
+  <div class="grid">
+    <form class="steps" id="form" autocomplete="off"></form>
+    <aside class="verdict" aria-live="polite">
+      <div class="card" id="verdict"></div>
+      <div class="card">
+        <div class="sec">
+          <h3>Assessment note</h3>
+          <textarea id="memo" readonly aria-label="Assessment note"></textarea>
+          <div class="actions"><button class="btn" id="copy" type="button">Copy note</button><span class="toast" id="toast"></span></div>
+        </div>
+      </div>
+      <p class="fine">A first-pass triage tool, not legal advice. It simplifies the Regulation's tests and exceptions; check the consolidated text in the Official Journal before relying on a result.</p>
+    </aside>
+  </div>
+</div>
+
+<script>
+const STEPS = [
+  { id:"scope", ref:"Art. 2", title:"Is the system outside the Act's scope?",
+    hint:"Tick any that apply. If none apply, the Act covers it.",
+    type:"multi", opts:[
+      ["military","Used exclusively for military, defence or national-security purposes"],
+      ["research","Developed and used solely for scientific research and development"],
+      ["personal","Used by an individual for purely personal, non-professional activity"],
+      ["prerelease","Still in research, testing or development, not yet placed on the market or put into service","Real-world testing is not covered by this exemption."]
+    ]},
+  { id:"role", ref:"Art. 3", title:"What is your role for this system?",
+    hint:"Obligations differ sharply between the two.",
+    type:"single", opts:[
+      ["provider","Provider","You develop it, or have it developed, and place it on the market under your name"],
+      ["deployer","Deployer","You use it under your authority in a professional context"]
+    ]},
+  { id:"art5", ref:"Art. 5", title:"Does it perform any prohibited practice?",
+    hint:"Any one of these makes the system unlawful in the EU.",
+    type:"multi", opts:[
+      ["manip","Deploys subliminal, manipulative or deceptive techniques that materially distort behaviour and cause significant harm"],
+      ["vuln","Exploits vulnerabilities due to age, disability or a social or economic situation, causing significant harm"],
+      ["social","Social scoring that leads to detrimental or unjustified treatment"],
+      ["crime","Predicts the risk of a person committing a crime based solely on profiling or personality traits"],
+      ["scrape","Builds facial-recognition databases by untargeted scraping of images from the internet or CCTV"],
+      ["emotion","Infers emotions in the workplace or in education","Exception for medical or safety reasons."],
+      ["biocat","Biometric categorisation to infer race, political opinions, union membership, religion, sex life or orientation"],
+      ["rbi","Real-time remote biometric identification in public spaces for law enforcement","Narrow exceptions exist (victim search, imminent threats, serious crime suspects)."],
+      ["ncii","Generates non-consensual intimate imagery or child sexual abuse material, or lacks reasonable safeguards against it","Added by the AI Omnibus; applies from 2 December 2026."]
+    ]},
+  { id:"annex1", ref:"Art. 6(1)\nAnnex I", title:"Is it a safety component of a regulated product?",
+    hint:"For example machinery, toys, medical devices, lifts, radio equipment, vehicles or aviation, where the product needs third-party conformity assessment.",
+    type:"single", opts:[["yes","Yes"],["no","No"]]},
+  { id:"annex3", ref:"Art. 6(2)\nAnnex III", title:"Is it used in one of these areas?",
+    hint:"Pick the closest match, or none.",
+    type:"single", opts:[
+      ["none","None of these"],
+      ["bio","Biometrics","Remote identification, categorisation by sensitive traits, emotion recognition"],
+      ["infra","Critical infrastructure","Safety components for digital infrastructure, traffic, water, gas, heating, electricity"],
+      ["edu","Education and training","Admissions, grading, steering learning, proctoring"],
+      ["work","Employment and workers","Recruitment, CV filtering, promotion, termination, task allocation, monitoring"],
+      ["services","Essential services","Public benefits eligibility, credit scoring, life and health insurance pricing, emergency call triage"],
+      ["police","Law enforcement","Victim risk, evidence reliability, re-offending risk, profiling in investigations"],
+      ["border","Migration, asylum and border control","Risk assessment, examining applications, detection of persons"],
+      ["justice","Justice and democratic processes","Assisting judges, influencing election outcomes or voting behaviour"]
+    ]},
+  { id:"derog", ref:"Art. 6(3)", title:"Does a filter exempt it from high-risk?",
+    hint:"An Annex III system is not high-risk if it poses no significant risk because it only does one of these. Profiling of natural persons always rules this out.",
+    type:"multi", dependsOn:s=>s.annex3 && s.annex3!=="none", opts:[
+      ["profiling","It profiles natural persons","If ticked, the system stays high-risk regardless of the boxes below."],
+      ["narrow","Performs a narrow procedural task"],
+      ["improve","Improves the result of a previously completed human activity"],
+      ["patterns","Detects decision-making patterns without replacing or influencing the human assessment"],
+      ["prep","Performs a preparatory task for an assessment"]
+    ]},
+  { id:"art50", ref:"Art. 50", title:"Which transparency situations apply?",
+    hint:"These obligations stack on top of any risk tier.",
+    type:"multi", opts:[
+      ["interact","Interacts directly with people, such as a chatbot or voice agent"],
+      ["synthetic","Generates synthetic audio, images, video or text"],
+      ["emorec","Performs emotion recognition or biometric categorisation (where lawful)"],
+      ["deepfake","Produces deepfakes"],
+      ["publictext","Generates or edits text published to inform the public on matters of public interest"]
+    ]},
+  { id:"gpai", ref:"Art. 51–55", title:"Do you provide a general-purpose AI model?",
+    hint:"A model trained on broad data that can perform a wide range of tasks, such as a foundation LLM, offered to others.",
+    type:"single", opts:[["no","No"],["gpai","Yes"],["systemic","Yes, with systemic risk","Trained above 10²⁵ FLOP or designated by the Commission"]]}
+];
+
+const PRESETS = {
+  cv:{role:"deployer",art5:[],annex1:"no",annex3:"work",derog:["profiling"],art50:[],gpai:"no",scope:[]},
+  chat:{role:"provider",art5:[],annex1:"no",annex3:"none",derog:[],art50:["interact","synthetic"],gpai:"no",scope:[]},
+  credit:{role:"provider",art5:[],annex1:"no",annex3:"services",derog:["profiling"],art50:[],gpai:"no",scope:[]},
+  spam:{role:"deployer",art5:[],annex1:"no",annex3:"none",derog:[],art50:[],gpai:"no",scope:[]},
+  emotion:{role:"deployer",art5:["emotion"],annex1:"no",annex3:"bio",derog:[],art50:["emorec"],gpai:"no",scope:[]},
+  clear:{role:"",art5:[],annex1:"",annex3:"",derog:[],art50:[],gpai:"",scope:[]}
+};
+
+const NAMES = {provider:"Provider",deployer:"Deployer"};
+const AREA = Object.fromEntries(STEPS.find(s=>s.id==="annex3").opts.map(o=>[o[0],o[1]]));
+const ART5 = Object.fromEntries(STEPS.find(s=>s.id==="art5").opts.map(o=>[o[0],o[1]]));
+const TODAY = new Date();
+
+const form = document.getElementById("form");
+form.innerHTML = STEPS.map(s=>{
+  const isSeg = s.type==="single" && s.opts.every(o=>!o[2]) && s.opts.length<=3;
+  const inputs = s.opts.map(([v,label,sub])=>{
+    const id = `${s.id}-${v}`;
+    const type = s.type==="multi"?"checkbox":"radio";
+    if(isSeg) return `<label for="${id}"><input id="${id}" type="${type}" name="${s.id}" value="${v}">${label}</label>`;
+    return `<label class="opt" for="${id}"><input id="${id}" type="${type}" name="${s.id}" value="${v}"><span class="t">${label}${sub?`<small>${sub}</small>`:""}</span></label>`;
+  }).join("");
+  return `<section class="step" id="step-${s.id}"><div class="ref">${s.ref.replace("\n","<br>")}</div><div class="body">
+    <h2>${s.title}</h2>${s.hint?`<p class="hint">${s.hint}</p>`:""}
+    <div class="${isSeg?"seg":"opts"}">${inputs}</div>
+    ${s.dependsOn?`<div class="skipnote" hidden>Only relevant when an Annex III area is selected.</div>`:""}
+  </div></section>`;
+}).join("");
+
+function read(){
+  const s={};
+  for(const st of STEPS){
+    const els=[...form.querySelectorAll(`[name="${st.id}"]`)];
+    s[st.id] = st.type==="multi" ? els.filter(e=>e.checked).map(e=>e.value) : (els.find(e=>e.checked)||{}).value||"";
+  }
+  return s;
+}
+function apply(p){
+  for(const st of STEPS){
+    form.querySelectorAll(`[name="${st.id}"]`).forEach(e=>{
+      e.checked = st.type==="multi" ? (p[st.id]||[]).includes(e.value) : p[st.id]===e.value;
+    });
+  }
+  update();
+}
+
+const D = (iso,label)=>({d:new Date(iso+"T00:00:00"),iso,label});
+const fmt = d=>d.d.toLocaleDateString("en-GB",{day:"numeric",month:"short",year:"numeric"});
+
+function classify(s){
+  const r = {tier:"", key:"", why:"", level:0, obligations:[], dates:[], notes:[]};
+  const role = s.role||"provider";
+  if(s.scope.length){
+    r.key="out"; r.tier="Outside scope"; r.level=0;
+    r.why="An Article 2 exclusion appears to apply, so the Act's obligations do not attach to this use.";
+    r.notes.push("Exclusions are read narrowly. If the system is later used for other purposes or placed on the market, reassess.");
+    return r;
+  }
+  const banned = s.art5.filter(k=>k!=="ncii");
+  if(banned.length || s.art5.includes("ncii")){
+    r.key="prohibited"; r.tier="Prohibited"; r.level=4;
+    r.why=`Falls under Article 5: ${s.art5.map(k=>ART5[k].split(",")[0].toLowerCase()).join("; ")}.`;
+    r.obligations.push(["Art. 5","Do not place on the market, put into service or use in the EU unless a listed exception clearly applies."]);
+    r.obligations.push(["Art. 99(3)","Fines up to €35m or 7% of worldwide annual turnover, whichever is higher."]);
+    if(banned.length) r.dates.push(D("2025-02-02","Article 5 prohibitions apply"));
+    if(s.art5.includes("ncii")) r.dates.push(D("2026-12-02","New prohibition on intimate imagery and CSAM generation applies"));
+  } else {
+    const a3 = s.annex3 && s.annex3!=="none";
+    const derogOK = a3 && !s.derog.includes("profiling") && s.derog.length>0;
+    if(s.annex1==="yes" || (a3 && !derogOK)){
+      r.key="high"; r.tier="High-risk"; r.level=3;
+      r.why = s.annex1==="yes" ? "It is a safety component of a product covered by Annex I harmonisation law."
+        : `It is used in an Annex III area (${AREA[s.annex3].toLowerCase()})${s.derog.includes("profiling")?" and profiles natural persons, so the Article 6(3) filter is unavailable":" and no Article 6(3) filter applies"}.`;
+      if(role==="provider"){
+        r.obligations.push(["Art. 9","Risk management system across the lifecycle"]);
+        r.obligations.push(["Art. 10","Data governance for training, validation and test data"]);
+        r.obligations.push(["Art. 11–12","Technical documentation and automatic logging"]);
+        r.obligations.push(["Art. 13–15","Instructions for use, human oversight design, accuracy and robustness"]);
+        r.obligations.push(["Art. 17","Quality management system"]);
+        r.obligations.push(["Art. 43, 47–49","Conformity assessment, EU declaration, CE marking, EU database registration"]);
+        r.obligations.push(["Art. 72–73","Post-market monitoring and serious-incident reporting"]);
+      } else {
+        r.obligations.push(["Art. 26","Use per instructions, assign competent human oversight, monitor and keep logs for at least six months"]);
+        r.obligations.push(["Art. 26(7)","Inform workers' representatives and affected workers before use at the workplace"]);
+        r.obligations.push(["Art. 26(11)","Tell people they are subject to a high-risk system that makes or assists decisions about them"]);
+        r.obligations.push(["Art. 27","Fundamental rights impact assessment if you are a public body, provide public services, or score credit or price life and health insurance"]);
+        r.obligations.push(["Art. 86","Give affected persons an explanation of decisions on request"]);
+      }
+      r.dates.push(s.annex1==="yes" ? D("2028-08-02","High-risk obligations for Annex I products apply") : D("2027-12-02","High-risk obligations for Annex III systems apply"));
+    } else if(s.art50.length){
+      r.key="limited"; r.tier="Transparency risk"; r.level=2;
+      r.why = derogOK ? "Annex III area, but an Article 6(3) filter applies. Transparency duties remain." : "Not high-risk, but Article 50 transparency duties apply.";
+    } else {
+      r.key="minimal"; r.tier="Minimal risk"; r.level=1;
+      r.why = derogOK ? "Annex III area, but an Article 6(3) filter applies and no transparency situation was selected." : "No prohibited practice, high-risk use or transparency situation was selected.";
+      r.obligations.push(["Art. 95","Voluntary codes of conduct are encouraged"]);
+    }
+    if(derogOK){
+      r.obligations.unshift(["Art. 6(4)","Document why the system is not high-risk before placing it on the market, and provide it to authorities on request"]);
+      if(role==="provider") r.obligations.unshift(["Art. 49(2)","Register the system in the EU database even though it is not high-risk"]);
+    }
+  }
+  if(r.key!=="prohibited"){
+    const t = {
+      interact:["Art. 50(1)","Design it so people know they are talking to an AI, unless obvious"],
+      synthetic:["Art. 50(2)","Mark outputs in a machine-readable format and make them detectable as AI-generated"],
+      emorec:["Art. 50(3)","Inform people exposed to the emotion recognition or categorisation"],
+      deepfake:["Art. 50(4)","Disclose that the content is artificially generated or manipulated"],
+      publictext:["Art. 50(4)","Disclose AI generation unless a human has editorial responsibility"]
+    };
+    const provT=["interact","synthetic"], depT=["emorec","deepfake","publictext"];
+    s.art50.forEach(k=>{
+      const mine = role==="provider"?provT.includes(k):depT.includes(k);
+      r.obligations.push([t[k][0], t[k][1] + (mine?"":` (mainly a ${role==="provider"?"deployer":"provider"} duty, check your contracts)`)]);
+    });
+    if(s.art50.length){
+      r.dates.push(D("2026-08-02","Article 50 transparency obligations apply"));
+      if(s.art50.includes("synthetic")) r.dates.push(D("2026-12-02","Marking deadline for generative systems already on the market before 2 Aug 2026"));
+    }
+  }
+  if(s.gpai==="gpai"||s.gpai==="systemic"){
+    r.obligations.push(["Art. 53","GPAI model: technical documentation, downstream information, copyright policy, training-data summary"]);
+    if(s.gpai==="systemic") r.obligations.push(["Art. 55","Systemic risk: model evaluations, adversarial testing, incident reporting, cybersecurity"]);
+    r.dates.push(D("2025-08-02","GPAI model obligations apply to new models"));
+    r.dates.push(D("2027-08-02","Deadline for GPAI models placed on the market before 2 Aug 2025"));
+  }
+  r.obligations.push(["Art. 4","AI literacy: make sure staff dealing with the system have sufficient AI literacy"]);
+  r.dates.push(D("2025-02-02","AI literacy duty applies"));
+  if(!s.role) r.notes.push("No role selected yet, so provider obligations are shown.");
+  return r;
+}
+
+const COLORS={out:"out",prohibited:"prohibited",high:"high",limited:"limited",minimal:"minimal"};
+function update(){
+  const s = read();
+  const deriv = STEPS.find(x=>x.id==="derog");
+  const on = deriv.dependsOn(s);
+  const stepEl = document.getElementById("step-derog");
+  stepEl.dataset.skip = String(!on);
+  stepEl.querySelectorAll("input").forEach(i=>i.disabled=!on);
+  stepEl.querySelector(".skipnote").hidden = on;
+  if(!on) s.derog=[];
+
+  const r = classify(s);
+  const c = COLORS[r.key];
+  const dates = [...new Map(r.dates.sort((a,b)=>a.d-b.d).map(d=>[d.iso+d.label,d])).values()];
+  const v = document.getElementById("verdict");
+  v.style.setProperty("--tc",`var(--t-${c})`);
+  v.style.setProperty("--tbg",`var(--t-bg-${c})`);
+  v.innerHTML = `
+    <div class="tier">
+      <div class="k">Verdict${s.role?` · ${NAMES[s.role]}`:""}</div>
+      <div class="name">${r.tier}</div>
+      <p class="why">${r.why}</p>
+      <div class="scale" aria-hidden="true">${[1,2,3,4].map(i=>`<i class="${i<=r.level?"on":""}"></i>`).join("")}</div>
+    </div>
+    ${r.obligations.length?`<div class="sec"><h3>What applies</h3><ul>${r.obligations.map(([a,t])=>`<li><b>${a}</b> ${t}</li>`).join("")}</ul></div>`:""}
+    ${dates.length?`<div class="sec"><h3>Key dates</h3><div class="dates">${dates.map(d=>`<div class="${d.d<=TODAY?"past":""}"><time datetime="${d.iso}">${fmt(d)}</time><span>${d.label}</span></div>`).join("")}</div></div>`:""}
+    ${r.notes.length?`<div class="sec"><h3>Notes</h3><ul>${r.notes.map(n=>`<li>${n}</li>`).join("")}</ul></div>`:""}`;
+
+  const lines = [
+    `AI ACT TRIAGE — ${TODAY.toLocaleDateString("en-GB")}`,
+    `Role: ${s.role?NAMES[s.role]:"not stated"}`,
+    `Classification: ${r.tier.toUpperCase()}`,
+    `Reasoning: ${r.why}`,
+    ``,`Applicable provisions:`,
+    ...r.obligations.map(([a,t])=>`- ${a}: ${t}`),
+    ...(dates.length?[``,`Key dates:`,...dates.map(d=>`- ${fmt(d)}: ${d.label}`)]:[]),
+    ``,`First-pass triage only; verify against the consolidated text of Regulation (EU) 2024/1689.`
+  ];
+  document.getElementById("memo").value = lines.join("\n");
+  const match = Object.entries(PRESETS).find(([k,p])=>k!=="clear" && JSON.stringify(norm(p))===JSON.stringify(norm(s)));
+  document.querySelectorAll(".chip").forEach(b=>b.setAttribute("aria-pressed", String(!!match && b.dataset.preset===match[0])));
+}
+function norm(p){return STEPS.map(st=>st.type==="multi"?[...(p[st.id]||[])].sort().join(","):(p[st.id]||""));}
+
+form.addEventListener("change",update);
+document.querySelectorAll(".chip").forEach(b=>b.addEventListener("click",()=>apply(PRESETS[b.dataset.preset])));
+document.getElementById("copy").addEventListener("click",async()=>{
+  const ta=document.getElementById("memo"), t=document.getElementById("toast");
+  try{ await navigator.clipboard.writeText(ta.value); t.textContent="Copied"; }
+  catch{ ta.focus(); ta.select(); t.textContent="Selected, press Ctrl+C"; }
+  setTimeout(()=>t.textContent="",2200);
+});
+apply(PRESETS.cv);
+</script>
